@@ -14,6 +14,8 @@ interface AnomalyEvent {
   createdAt: string;
 }
 
+export const metadata = { title: "Anomalies — SensorWatch AI" };
+
 export default function AnomaliesPage() {
   const [anomalies, setAnomalies] = useState<AnomalyEvent[]>([]);
   const [filter, setFilter] = useState("all");

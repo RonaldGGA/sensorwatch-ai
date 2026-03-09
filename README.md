@@ -98,7 +98,8 @@ lib/
 
 ## Screenshots
 
-<!-- Add screenshots here before deploy -->
+![Dashboard](public/screenshot-dashboard.png)
+![Anomalies](public/screenshot-anomalies.png)
 
 ---
 
