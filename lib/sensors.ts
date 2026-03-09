@@ -1,6 +1,5 @@
 // lib/sensors.ts
-// Este archivo define los sensores, sus rangos normales,
-// y la lógica para generar lecturas realistas con anomalías
+/**This file defines the sensors, their normal ranges, and the logic to generate realistic readings with anomalies */
 
 export type SensorType = "temperature" | "pressure" | "vibration";
 
@@ -15,8 +14,6 @@ export interface SensorConfig {
   anomalyProbability: number; // 0-1
 }
 
-// Los 3 sensores industriales que simulamos
-// Los rangos están basados en valores reales de sistemas industriales
 export const SENSORS: SensorConfig[] = [
   {
     id: "temp-01",
@@ -50,8 +47,6 @@ export const SENSORS: SensorConfig[] = [
   },
 ];
 
-// Genera un número aleatorio entre min y max con 2 decimales
-// Por qué 2 decimales: los sensores industriales reales tienen esa precisión
 function randomBetween(min: number, max: number): number {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100;
 }
@@ -64,8 +59,6 @@ export interface SensorReading {
   isAnomaly: boolean;
 }
 
-// Genera UNA lectura para UN sensor
-// Por qué separado: cada sensor se procesa independientemente
 export function generateReading(sensor: SensorConfig): SensorReading {
   const isAnomaly = Math.random() < sensor.anomalyProbability;
 
@@ -82,14 +75,10 @@ export function generateReading(sensor: SensorConfig): SensorReading {
   };
 }
 
-// Genera lecturas para TODOS los sensores de una vez
-// Esto es lo que llama el endpoint de simulación cada 5 segundos
 export function generateAllReadings(): SensorReading[] {
   return SENSORS.map((sensor) => generateReading(sensor));
 }
 
-// Devuelve el threshold relevante para determinar severidad
-// Lo usa Gemini para contextualizar el análisis
 export function getThreshold(sensor: SensorConfig): number {
   return sensor.anomalyMin;
 }
