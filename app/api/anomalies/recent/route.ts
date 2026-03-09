@@ -1,7 +1,4 @@
 // app/api/anomalies/recent/route.ts
-// Devuelve las N anomalías más recientes para el panel del dashboard
-// Por qué endpoint separado: en el futuro la página de Anomalías
-// también lo usa con distintos parámetros
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";

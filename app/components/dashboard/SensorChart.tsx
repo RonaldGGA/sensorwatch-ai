@@ -1,8 +1,3 @@
-// components/dashboard/SensorChart.tsx
-// Muestra la gráfica de línea de UN sensor con sus últimas N lecturas
-// Por qué Recharts: está construido sobre React, funciona bien con
-// Next.js, y es el estándar para dashboards en el ecosistema React
-
 "use client";
 
 import {
@@ -15,7 +10,6 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Reading {
   value: number;
@@ -32,6 +26,48 @@ interface SensorChartProps {
   readings: Reading[];
 }
 
+const CustomTooltip = ({ active, payload, label, unit }: any) => {
+  if (!active || !payload?.length) return null;
+  const isAnomaly = payload[0]?.payload?.isAnomaly;
+  return (
+    <div
+      style={{
+        background: "#0d1219",
+        border: `1px solid ${isAnomaly ? "#ff4444" : "#00d4ff"}`,
+        borderRadius: 4,
+        padding: "6px 10px",
+        fontFamily: "JetBrains Mono",
+        fontSize: 11,
+      }}
+    >
+      <p style={{ color: "#52627a", marginBottom: 2 }}>{label}</p>
+      <p style={{ color: isAnomaly ? "#ff4444" : "#00d4ff" }}>
+        {payload[0]?.value?.toFixed(2)} {unit}
+      </p>
+      {isAnomaly && <p style={{ color: "#ff4444", fontSize: 10 }}>⚠ ANOMALY</p>}
+    </div>
+  );
+};
+
+const renderDot = (unit: string) => (props: any) => {
+  const { cx, cy, payload } = props;
+  if (payload.isAnomaly) {
+    return (
+      <circle
+        key={`dot-${payload.index}`}
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill="#ff4444"
+        stroke="#ff4444"
+        strokeWidth={1}
+        style={{ filter: "drop-shadow(0 0 4px #ff4444)" }}
+      />
+    );
+  }
+  return <circle key={`dot-${payload.index}`} cx={cx} cy={cy} r={0} />;
+};
+
 export function SensorChart({
   sensorId,
   type,
@@ -40,8 +76,6 @@ export function SensorChart({
   normalMax,
   readings,
 }: SensorChartProps) {
-  // Transformamos los datos para Recharts
-  // Por qué formateamos la hora: el timestamp completo no cabe en el eje X
   const chartData = readings.map((r, index) => ({
     index,
     value: r.value,
@@ -53,86 +87,82 @@ export function SensorChart({
     }),
   }));
 
-  // Color del punto según si es anomalía o no
-  // Por qué función: Recharts permite personalizar el dot con una función
-  const renderDot = (props: any) => {
-    const { cx, cy, payload } = props;
-    if (payload.isAnomaly) {
-      return (
-        <circle
-          key={`dot-${payload.index}`}
-          cx={cx}
-          cy={cy}
-          r={5}
-          fill="#ef4444"
-          stroke="white"
-          strokeWidth={2}
-        />
-      );
-    }
-    return <circle key={`dot-${payload.index}`} cx={cx} cy={cy} r={0} />;
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="capitalize text-sm">
-          {type} ({sensorId}) — {unit}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-            <XAxis
-              dataKey="time"
-              tick={{ fontSize: 10 }}
-              // Por qué interval calculado: con 50 puntos mostrar
-              // todos los labels se superpone, esto muestra ~5
-              interval={Math.floor(chartData.length / 5)}
-            />
-            <YAxis
-              tick={{ fontSize: 10 }}
-              // Damos margen para que los picos de anomalía sean visibles
-              domain={[Math.min(normalMin * 0.8), Math.max(normalMax * 1.4)]}
-            />
-            <Tooltip
-              formatter={(value) => {
-                if (value === undefined || value === null) return "";
-                return [`${value} ${unit}`, type];
-              }}
-              labelFormatter={(label) => `Time: ${label}`}
-            />
-            {/* Líneas de referencia para el rango normal */}
-            {/* Por qué ReferenceLine: muestra visualmente cuándo */}
-            {/* un valor sale del rango sin necesitar lógica extra */}
-            <ReferenceLine
-              y={normalMax}
-              stroke="#f59e0b"
-              strokeDasharray="4 4"
-              label={{ value: "Max", fontSize: 10 }}
-            />
-            <ReferenceLine
-              y={normalMin}
-              stroke="#f59e0b"
-              strokeDasharray="4 4"
-              label={{ value: "Min", fontSize: 10 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={renderDot}
-              activeDot={{ r: 6 }}
-              // Por qué isAnimationActive false:
-              // con polling cada 5s la animación constante
-              // se ve entrecortada y marea al usuario
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <div
+      className="rounded border p-4"
+      style={{ background: "#0d1219", borderColor: "#1a2332" }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <p
+          className="text-xs font-semibold tracking-widest uppercase"
+          style={{ color: "#00d4ff", fontFamily: "JetBrains Mono" }}
+        >
+          {type} / {sensorId}
+        </p>
+        <p
+          className="text-xs"
+          style={{ color: "#52627a", fontFamily: "JetBrains Mono" }}
+        >
+          {readings.length} pts
+        </p>
+      </div>
+
+      <ResponsiveContainer width="100%" height={180}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 4, right: 4, bottom: 0, left: -10 }}
+        >
+          <CartesianGrid
+            strokeDasharray="1 4"
+            stroke="#1a2332"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="time"
+            tick={{
+              fontSize: 9,
+              fill: "#364152",
+              fontFamily: "JetBrains Mono",
+            }}
+            interval={Math.floor(chartData.length / 4)}
+            axisLine={{ stroke: "#1a2332" }}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{
+              fontSize: 9,
+              fill: "#364152",
+              fontFamily: "JetBrains Mono",
+            }}
+            domain={[normalMin * 0.8, normalMax * 1.4]}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<CustomTooltip unit={unit} />} />
+          <ReferenceLine
+            y={normalMax}
+            stroke="#ffb800"
+            strokeDasharray="3 3"
+            strokeOpacity={0.5}
+          />
+          <ReferenceLine
+            y={normalMin}
+            stroke="#ffb800"
+            strokeDasharray="3 3"
+            strokeOpacity={0.5}
+          />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#00d4ff"
+            strokeWidth={1.5}
+            dot={renderDot(unit)}
+            activeDot={{ r: 4, fill: "#00d4ff", stroke: "#00d4ff" }}
+            isAnimationActive={false}
+            style={{ filter: "drop-shadow(0 0 3px rgba(0, 212, 255, 0.4))" }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

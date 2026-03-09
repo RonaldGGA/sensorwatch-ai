@@ -1,12 +1,4 @@
-// components/dashboard/StatusCard.tsx
-// Este componente muestra el estado actual de UN sensor
-// Por qué componente separado: se reutiliza 3 veces en el dashboard
-// y tiene su propia lógica de color según el estado
-
 "use client";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface StatusCardProps {
   sensorId: string;
@@ -18,24 +10,16 @@ interface StatusCardProps {
   isAnomaly: boolean;
 }
 
-// Determina el color y label del badge según el estado del sensor
-// Por qué función separada: la lógica de estado es reutilizable
-// y hace el JSX más legible
-function getSensorStatus(
-  value: number | null,
-  isAnomaly: boolean,
-): { label: string; variant: "default" | "secondary" | "destructive" } {
-  if (value === null) return { label: "No data", variant: "secondary" };
-  if (isAnomaly) return { label: "ANOMALY", variant: "destructive" };
-  return { label: "Normal", variant: "default" };
-}
-
-// Íconos simples por tipo de sensor
-// Por qué no importar lucide aquí: mantiene el componente liviano
 const SENSOR_ICONS: Record<string, string> = {
-  temperature: "🌡️",
-  pressure: "⚡",
-  vibration: "📳",
+  temperature: "TEMP",
+  pressure: "PRES",
+  vibration: "VIB",
+};
+
+const SENSOR_SYMBOLS: Record<string, string> = {
+  temperature: "△",
+  pressure: "◈",
+  vibration: "≋",
 };
 
 export function StatusCard({
@@ -47,24 +31,120 @@ export function StatusCard({
   normalMax,
   isAnomaly,
 }: StatusCardProps) {
-  const status = getSensorStatus(currentValue, isAnomaly);
+  const pct =
+    currentValue !== null
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((currentValue - normalMin) / (normalMax - normalMin)) * 100,
+          ),
+        )
+      : 0;
+
+  const isHigh = currentValue !== null && currentValue > normalMax;
+  const isLow = currentValue !== null && currentValue < normalMin;
 
   return (
-    <Card className={isAnomaly ? "border-destructive" : ""}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium capitalize">
-          {SENSOR_ICONS[type]} {type} — {sensorId}
-        </CardTitle>
-        <Badge variant={status.variant}>{status.label}</Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">
-          {currentValue !== null ? `${currentValue} ${unit}` : "—"}
+    <div
+      className={`relative rounded border p-4 transition-all duration-300 ${
+        isAnomaly
+          ? "border-red-500/60 bg-red-950/20 glow-red"
+          : "border-border bg-card glow-cyan"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span
+            className="text-lg"
+            style={{ color: isAnomaly ? "#ff4444" : "#00d4ff" }}
+          >
+            {SENSOR_SYMBOLS[type] ?? "○"}
+          </span>
+          <div>
+            <p
+              className="text-xs font-semibold tracking-widest uppercase"
+              style={{ color: "#00d4ff", fontFamily: "JetBrains Mono" }}
+            >
+              {SENSOR_ICONS[type] ?? type}
+            </p>
+            <p className="text-xs" style={{ color: "#52627a" }}>
+              {sensorId}
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Normal range: {normalMin}–{normalMax} {unit}
-        </p>
-      </CardContent>
-    </Card>
+
+        <div className="flex items-center gap-1.5">
+          <div
+            className={`w-2 h-2 rounded-full ${isAnomaly ? "bg-red-500 status-blink" : "bg-emerald-400"}`}
+          />
+          <span
+            className="text-xs font-mono tracking-wider"
+            style={{
+              color: isAnomaly ? "#ff4444" : "#00e5a0",
+              fontFamily: "JetBrains Mono",
+            }}
+          >
+            {isAnomaly ? "ALERT" : "NOMINAL"}
+          </span>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <span
+          className="text-4xl font-bold tabular-nums"
+          style={{
+            fontFamily: "JetBrains Mono",
+            color: isAnomaly ? "#ff4444" : "#e2e8f0",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {currentValue !== null ? currentValue.toFixed(2) : "—"}
+        </span>
+        <span
+          className="text-sm ml-1.5"
+          style={{ color: "#52627a", fontFamily: "JetBrains Mono" }}
+        >
+          {unit}
+        </span>
+      </div>
+
+      <div className="space-y-1">
+        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${pct}%`,
+              background: isAnomaly
+                ? "linear-gradient(90deg, #ff4444, #ff6666)"
+                : "linear-gradient(90deg, #00b4d8, #00d4ff)",
+            }}
+          />
+        </div>
+        <div className="flex justify-between">
+          <span
+            className="text-xs"
+            style={{ color: "#52627a", fontFamily: "JetBrains Mono" }}
+          >
+            {normalMin} {unit}
+          </span>
+          <span
+            className="text-xs"
+            style={{
+              color: isHigh || isLow ? "#ffb800" : "#52627a",
+              fontFamily: "JetBrains Mono",
+            }}
+          >
+            {isHigh ? "▲ HIGH" : isLow ? "▼ LOW" : "IN RANGE"}
+          </span>
+          <span
+            className="text-xs"
+            style={{ color: "#52627a", fontFamily: "JetBrains Mono" }}
+          >
+            {normalMax} {unit}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
   const fetchLatest = useCallback(async () => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // timeout 8s
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
       const [sensorsRes, anomaliesRes] = await Promise.all([
@@ -69,7 +69,7 @@ export default function DashboardPage() {
       if (anomaliesData.success) setRecentAnomalies(anomaliesData.anomalies);
       setLastUpdated(new Date());
     } catch (error) {
-      if ((error as Error).name === "AbortError") return; // timeout silencioso
+      if ((error as Error).name === "AbortError") return;
       console.error("Fetch error:", error);
     } finally {
       clearTimeout(timeout);
@@ -109,30 +109,85 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <header
+        className="border-b px-6 py-3"
+        style={{
+          borderColor: "#1a2332",
+          background: "linear-gradient(180deg, #0a0e14 0%, #080c12 100%)",
+        }}
+      >
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">SensorWatch AI</h1>
-            <p className="text-xs text-muted-foreground">
-              Industrial Monitoring Dashboard
+            <h1
+              className="text-lg font-bold tracking-widest uppercase"
+              style={{
+                color: "#00d4ff",
+                fontFamily: "JetBrains Mono",
+                letterSpacing: "0.15em",
+              }}
+            >
+              SensorWatch<span style={{ color: "#e2e8f0" }}> AI</span>
+            </h1>
+            <p
+              className="text-xs tracking-widest uppercase"
+              style={{ color: "#364152" }}
+            >
+              Industrial Monitoring System
             </p>
           </div>
+
+          <nav className="flex items-center gap-1">
+            {[
+              { href: "/", label: "DASHBOARD" },
+              { href: "/anomalies", label: "ANOMALIES" },
+              { href: "/reports", label: "REPORTS" },
+            ].map(({ href, label }) => {
+              const isActive = href === "/";
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  className="px-3 py-1.5 text-xs tracking-widest rounded transition-all"
+                  style={{
+                    fontFamily: "JetBrains Mono",
+                    color: isActive ? "#00d4ff" : "#52627a",
+                    background: isActive
+                      ? "rgba(0, 212, 255, 0.08)"
+                      : "transparent",
+                    border: isActive
+                      ? "1px solid rgba(0, 212, 255, 0.2)"
+                      : "1px solid transparent",
+                  }}
+                >
+                  {label}
+                </a>
+              );
+            })}
+          </nav>
+
           <div className="flex items-center gap-3">
             {activeAnomalies > 0 && (
-              <Badge variant="destructive">
-                {activeAnomalies} active anomal
-                {activeAnomalies === 1 ? "y" : "ies"}
-              </Badge>
+              <span
+                className="px-2 py-1 text-xs rounded status-blink"
+                style={{
+                  fontFamily: "JetBrains Mono",
+                  color: "#ff4444",
+                  background: "rgba(255, 68, 68, 0.1)",
+                  border: "1px solid rgba(255, 68, 68, 0.3)",
+                }}
+              >
+                ⚠ {activeAnomalies} ALERT{activeAnomalies > 1 ? "S" : ""}
+              </span>
             )}
-            <Badge variant="secondary" className="text-xs">
-              {lastUpdated
-                ? `Updated ${lastUpdated.toLocaleTimeString()}`
-                : "Loading..."}
-            </Badge>
+            <span
+              className="text-xs"
+              style={{ fontFamily: "JetBrains Mono", color: "#364152" }}
+            >
+              {lastUpdated ? lastUpdated.toLocaleTimeString() : "—"}
+            </span>
           </div>
         </div>
       </header>
-
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {sensors.map((sensor) => (
