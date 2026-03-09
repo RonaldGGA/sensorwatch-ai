@@ -14,9 +14,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SensorWatch AI",
+  title: "SensorWatch AI — Industrial Monitoring System",
   description:
-    "Industrial sensor monitoring dashboard with AI-powered anomaly detection",
+    "Real-time industrial sensor monitoring dashboard with AI-powered anomaly detection. Built with Next.js, PostgreSQL, and LLM integration.",
+  keywords: [
+    "industrial monitoring",
+    "sensor dashboard",
+    "anomaly detection",
+    "AI",
+    "Next.js",
+  ],
+  authors: [{ name: "Ronald González", url: "https://github.com/RonaldGGA" }],
+  openGraph: {
+    title: "SensorWatch AI",
+    description:
+      "Real-time industrial sensor monitoring with AI-powered anomaly detection.",
+    url: "https://sensorwatch-ai.vercel.app",
+    siteName: "SensorWatch AI",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
