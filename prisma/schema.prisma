@@ -1,0 +1,51 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model User {
+    id        String   @id @default(cuid())
+    email     String   @unique
+    password  String
+    createdAt DateTime @default(now())
+}
+
+model SensorReading {
+    id        String   @id @default(cuid())
+    sensorId  String
+    type      String
+    value     Float
+    unit      String
+    isAnomaly Boolean  @default(false)
+    createdAt DateTime @default(now())
+
+    @@index([sensorId, createdAt])
+    @@index([createdAt])
+}
+
+model AnomalyEvent {
+    id         String   @id @default(cuid())
+    sensorId   String
+    sensorType String
+    value      Float
+    threshold  Float
+    aiAnalysis String
+    severity   String
+    resolved   Boolean  @default(false)
+    createdAt  DateTime @default(now())
+
+    @@index([createdAt])
+    @@index([severity])
+}
+
+model AIReport {
+    id        String   @id @default(cuid())
+    period    String
+    content   String
+    summary   String
+    createdAt DateTime @default(now())
+}
