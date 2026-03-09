@@ -11,8 +11,6 @@ interface AIReport {
   createdAt: string;
 }
 
-export const metadata = { title: "Reports — SensorWatch AI" };
-
 export default function ReportsPage() {
   const [reports, setReports] = useState<AIReport[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
