@@ -9,14 +9,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateAllReadings, SENSORS } from "@/lib/sensors";
-import { analyzeAnomaly } from "@/lib/gemini";
+import { analyzeAnomaly } from "@/lib/stepfun-ai";
 
 export async function POST() {
   try {
     const readings = generateAllReadings();
 
-    // Por qué createMany: insertar las 3 lecturas en una
-    // sola query es más eficiente que 3 queries separadas
     await prisma.sensorReading.createMany({
       data: readings.map((r) => ({
         sensorId: r.sensorId,
@@ -27,17 +25,11 @@ export async function POST() {
       })),
     });
 
-    // Procesamos anomalías en paralelo con Promise.all
-    // Por qué paralelo: si hay 2 anomalías simultáneas,
-    // no tiene sentido esperar que Gemini analice la primera
-    // antes de analizar la segunda
     const anomalyPromises = readings
       .filter((r) => r.isAnomaly)
       .map(async (reading) => {
         const sensorConfig = SENSORS.find((s) => s.id === reading.sensorId)!;
 
-        // Obtenemos las últimas 20 lecturas de este sensor
-        // para darle contexto a Gemini
         const recentReadings = await prisma.sensorReading.findMany({
           where: { sensorId: reading.sensorId },
           orderBy: { createdAt: "desc" },
@@ -54,8 +46,15 @@ export async function POST() {
           sensorConfig.normalMax,
           recentReadings.map((r: { value: any }) => r.value),
         );
+        const severity = (analysis.severity ?? "medium").trim() as
+          | "low"
+          | "medium"
+          | "high";
+        const validSeverities = ["low", "medium", "high"];
+        const safeSeverity = validSeverities.includes(severity)
+          ? severity
+          : "medium";
 
-        // Guardamos el evento con el análisis de Gemini
         await prisma.anomalyEvent.create({
           data: {
             sensorId: reading.sensorId,
@@ -63,7 +62,7 @@ export async function POST() {
             value: reading.value,
             threshold: sensorConfig.anomalyMin,
             aiAnalysis: JSON.stringify(analysis),
-            severity: analysis.severity,
+            severity: safeSeverity,
           },
         });
 
