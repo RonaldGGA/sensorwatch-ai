@@ -20,6 +20,10 @@ Built to demonstrate full-stack engineering with LLM integration — the kind of
 
 ---
 
+### Video Demo
+
+![Demo](public/demo.gif)
+
 ## Tech stack
 
 | Layer | Technology |
