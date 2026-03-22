@@ -43,14 +43,25 @@ export default function DashboardPage() {
   const simulate = useCallback(async () => {
     if (isSimulatingRef.current) return;
     isSimulatingRef.current = true;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
     try {
-      await fetch("/api/sensors/simulate", { method: "POST" });
+      await fetch("/api/sensors/simulate", {
+        method: "POST",
+        signal: controller.signal,
+      });
     } catch (error) {
-      console.error("Simulation error:", error);
+      if ((error as Error).name === "AbortError") {
+        console.warn("Simulate timeout -Skipping cycle");
+      } else {
+        console.error("Simulation error", error);
+      }
     } finally {
+      clearTimeout(timeout);
       isSimulatingRef.current = false;
     }
-  }, []); // ← ahora sí puede ser []
+  }, []);
 
   const fetchLatest = useCallback(async () => {
     const controller = new AbortController();

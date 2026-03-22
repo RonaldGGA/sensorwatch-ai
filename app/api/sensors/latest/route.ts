@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       SENSORS.map(async (sensor) => {
         const readings = await prisma.sensorReading.findMany({
           where: { sensorId: sensor.id },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: "desc" },
           take: limit,
           select: {
             value: true,
@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
           },
         });
 
+        const sortedReadings = readings.reverse();
+
         return {
           sensorId: sensor.id,
           type: sensor.type,
@@ -38,9 +40,10 @@ export async function GET(request: NextRequest) {
           normalMin: sensor.normalMin,
           normalMax: sensor.normalMax,
           readings,
-          // El valor más reciente para el status card
-          currentValue: readings[readings.length - 1]?.value ?? null,
-          currentIsAnomaly: readings[readings.length - 1]?.isAnomaly ?? false,
+          currentValue:
+            sortedReadings[sortedReadings.length - 1]?.value ?? null,
+          currentIsAnomaly:
+            sortedReadings[sortedReadings.length - 1]?.isAnomaly ?? false,
         };
       }),
     );
